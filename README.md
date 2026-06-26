@@ -5,8 +5,9 @@
 
 Frictionless, **zero-knowledge** multi-view secret sharing.
 
-**[Live demo](https://ghostdrop-demo.onrender.com)** · the demo uses an in-memory
-store, so secrets there don't survive a restart.
+**[Live demo]([https://ghostdrop-demo.onrender.com](https://ghost-drop-kj83.onrender.com))** · hosted on Render free tier 
+(may spin down after inactivity; first load can take ~30s). Uses an in-memory store,
+so secrets do not persist across restarts.
 
 Share a password or API key with a small group using a single link. The secret
 is encrypted **in the browser** (the server only ever sees ciphertext), can be
