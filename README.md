@@ -11,8 +11,8 @@ stops one recipient from burning every view by refreshing.
 ## How it works
 
 1. **Zero-knowledge setup** — the sender's browser encrypts the secret with
-   AES-GCM (WebCrypto). The raw key is placed in the URL **hash** and never sent
-   to the server.
+   AES-256-GCM (WebCrypto). The raw key is placed in the URL **hash** and never
+   sent to the server.
 2. **Ticket dispensing** — the backend stores the ciphertext and a list of N
    single-use tokens, both with a TTL guaranteeing deletion at the chosen
    expiry.
@@ -21,23 +21,34 @@ stops one recipient from burning every view by refreshing.
    LocalStorage **and** IndexedDB for a poison token tied to that secret id. If
    found, the API call never fires.
 5. **Decryption & poisoning** — on a clean device the server pops one token
-   (atomically), returns the ciphertext plus a signed poison JWT; the browser
+   (atomically), returns the ciphertext plus a signed poison token; the browser
    persists the poison in both stores, then decrypts locally with the hash key.
    The server also rejects any request that replays a valid poison token, so the
    authority is server-side, not just client friction.
 6. **Final destruction** — when the token list hits 0, the ciphertext is wiped.
 
+## Stack
+
+- **Backend:** Rust ([axum](https://github.com/tokio-rs/axum) + Tokio), Redis
+  for the token list + TTL, HMAC-SHA256 for poison tokens.
+- **Frontend:** static HTML/CSS/JS with the WebCrypto API — no build step.
+
 ## Quick start
 
 ```bash
-npm install
-npm start
+cargo run
 # open http://localhost:3000
 ```
 
 With **no Redis running**, the default `STORE_DRIVER=auto` transparently falls
 back to an in-memory store — great for trying it out. For production or
 multi-instance deployments, use Redis (see below).
+
+For an optimized binary:
+
+```bash
+cargo run --release
+```
 
 ### With Redis
 
@@ -46,14 +57,13 @@ multi-instance deployments, use Redis (see below).
 docker run -p 6379:6379 redis:7-alpine
 
 # point GhostDrop at it and require it
-STORE_DRIVER=redis REDIS_URL=redis://127.0.0.1:6379 npm start
+STORE_DRIVER=redis REDIS_URL=redis://127.0.0.1:6379 cargo run --release
 ```
 
 ### Docker Compose (app + Redis)
 
 ```bash
-JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))") \
-  docker compose up --build
+JWT_SECRET=$(openssl rand -hex 32) docker compose up --build
 ```
 
 ## Configuration
@@ -76,20 +86,20 @@ Copy `.env.example` to `.env`. Key settings:
 
 ## API
 
-| Method & path                | Body / auth                                   | Result                                              |
-| ---------------------------- | --------------------------------------------- | --------------------------------------------------- |
-| `POST /api/secrets`          | `{ ciphertext, iv, viewLimit, ttlSeconds }`   | `201 { id }` — ciphertext only, no key              |
-| `GET /api/secrets/:id/meta`  | —                                             | `{ remaining, expiresAt }` or `404` (non-destructive) |
-| `POST /api/secrets/:id/view` | optional `Authorization: Bearer <poison>`     | `{ ciphertext, iv, remaining, poison }`, `403`, or `410` |
+| Method & path                | Body / auth                                   | Result                                                  |
+| ---------------------------- | --------------------------------------------- | ------------------------------------------------------- |
+| `POST /api/secrets`          | `{ ciphertext, iv, viewLimit, ttlSeconds }`   | `201 { id }` — ciphertext only, no key                  |
+| `GET /api/secrets/:id/meta`  | —                                             | `{ remaining, expiresAt }` or `404` (non-destructive)   |
+| `POST /api/secrets/:id/view` | optional `Authorization: Bearer <poison>`     | `{ ciphertext, iv, remaining, poison }`, `403`, or `410`|
 
 ## Testing
 
 ```bash
-npm test
+cargo test
 ```
 
-Covers the create → multi-view → destruction lifecycle, server-side poison
-rejection, and input validation.
+Covers the create → multi-view → destruction lifecycle and poison
+sign/verify (including expiry rejection).
 
 ## Security model & limitations
 
@@ -102,6 +112,5 @@ rejection, and input validation.
   with a fresh browser profile / incognito counts as a new device — that is by
   design (one view *per device*), bounded by the hard server-side view limit.
 - Not included (add for production): rate limiting / abuse protection,
-  persistent audit logging, and HTTPS termination (run behind a TLS proxy and
-  set `TRUST_PROXY=true`).
+  persistent audit logging, and HTTPS termination (run behind a TLS proxy).
 ```

@@ -1,15 +1,23 @@
-FROM node:20-alpine
-
+# --- build stage ---
+FROM rust:1-bookworm AS build
 WORKDIR /app
 
-# Install production deps first for better layer caching.
-COPY package.json ./
-RUN npm install --omit=dev
+# Cache dependencies first.
+COPY Cargo.toml Cargo.lock ./
+RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -rf src
 
-COPY server ./server
+# Build the real binary.
+COPY src ./src
+RUN touch src/main.rs && cargo build --release
+
+# --- runtime stage ---
+FROM debian:bookworm-slim
+WORKDIR /app
+RUN useradd -m app
+COPY --from=build /app/target/release/ghostdrop /usr/local/bin/ghostdrop
 COPY public ./public
 
-ENV NODE_ENV=production
+ENV PORT=3000
 EXPOSE 3000
-
-CMD ["node", "server/index.js"]
+USER app
+CMD ["ghostdrop"]

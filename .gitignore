@@ -1,5 +1,4 @@
-node_modules/
+/target
 .env
-npm-debug.log*
 *.log
 .DS_Store
