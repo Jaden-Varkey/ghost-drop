@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GhostDrop — view secret</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="brand">
+        <span class="ghost" aria-hidden="true">👻</span>
+        <h1>GhostDrop</h1>
+      </header>
+
+      <section class="card">
+        <p class="status" id="status">Checking link…</p>
+
+        <!-- Clean device: deliberate reveal step before burning a view -->
+        <div id="reveal-card" hidden>
+          <h2>A secret is waiting for you</h2>
+          <p class="meta" id="meta"></p>
+          <p class="warn">
+            Opening this will consume <strong>one</strong> view. This device can
+            only view it once.
+          </p>
+          <button id="reveal-btn" type="button" class="primary">
+            Reveal secret
+          </button>
+        </div>
+
+        <!-- Revealed secret -->
+        <div id="secret-card" hidden>
+          <h2>Decrypted secret</h2>
+          <div class="link-row">
+            <textarea id="secret-out" rows="4" readonly></textarea>
+          </div>
+          <button id="copy-secret-btn" type="button" class="secondary">
+            Copy
+          </button>
+          <p class="meta" id="remaining"></p>
+        </div>
+
+        <!-- Blocked / gone / error -->
+        <div id="blocked-card" hidden>
+          <h2 id="blocked-title">Unavailable</h2>
+          <p class="status" id="blocked-msg"></p>
+          <a class="ghost-btn" href="/">Create your own secret</a>
+        </div>
+      </section>
+    </main>
+
+    <script src="/js/crypto.js"></script>
+    <script src="/js/poison.js"></script>
+    <script src="/js/view.js"></script>
+  </body>
+</html>

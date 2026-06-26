@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GhostDrop — share secrets that vanish</title>
+    <meta
+      name="description"
+      content="Frictionless, zero-knowledge multi-view secret sharing."
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="brand">
+        <span class="ghost" aria-hidden="true">👻</span>
+        <h1>GhostDrop</h1>
+        <p class="tagline">
+          Share a secret with exactly the people you choose. Encrypted in your
+          browser, destroyed after the last view.
+        </p>
+      </header>
+
+      <section class="card" id="create-card">
+        <form id="create-form" autocomplete="off">
+          <label for="secret">Secret</label>
+          <textarea
+            id="secret"
+            rows="4"
+            placeholder="Paste a password, API key, or any sensitive text…"
+            required
+          ></textarea>
+
+          <div class="row">
+            <div class="field">
+              <label for="view-limit">Number of views</label>
+              <input
+                id="view-limit"
+                type="number"
+                min="1"
+                max="100"
+                value="3"
+                required
+              />
+              <small>How many times it can be opened (one per device).</small>
+            </div>
+
+            <div class="field">
+              <label for="expiry">Expires in</label>
+              <select id="expiry">
+                <option value="900">15 minutes</option>
+                <option value="3600">1 hour</option>
+                <option value="86400" selected>1 day</option>
+                <option value="259200">3 days</option>
+                <option value="604800">7 days</option>
+                <option value="2592000">30 days</option>
+              </select>
+              <small>Guaranteed deletion at this time.</small>
+            </div>
+          </div>
+
+          <p class="error" id="error" hidden></p>
+          <button type="submit" id="submit-btn" class="primary">
+            Create secure link
+          </button>
+        </form>
+
+        <div id="result" hidden>
+          <h2>Your secure link is ready</h2>
+          <p class="summary" id="summary"></p>
+          <div class="link-row">
+            <input id="share-link" type="text" readonly />
+            <button id="copy-btn" type="button" class="secondary">Copy</button>
+          </div>
+          <p class="warn">
+            The decryption key lives in the link after the
+            <code>#</code> and never touches our servers. Anyone with this exact
+            link can view the secret (up to the view limit).
+          </p>
+          <button id="again-btn" type="button" class="ghost-btn">
+            Share another secret
+          </button>
+        </div>
+      </section>
+
+      <footer>
+        <p>
+          Zero-knowledge: your secret is AES-GCM encrypted in your browser. The
+          server only ever stores ciphertext.
+        </p>
+      </footer>
+    </main>
+
+    <script src="/js/crypto.js"></script>
+    <script src="/js/create.js"></script>
+  </body>
+</html>
