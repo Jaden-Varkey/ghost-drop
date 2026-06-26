@@ -1,6 +1,7 @@
 //! Storage layer. Two interchangeable implementations behind one enum:
 //!   * `MemoryStore` — zero-setup, in-process (dev / fallback).
 //!   * `RedisStore`  — production: blob + Redis List of single-use tokens + TTL.
+//!
 //! Both share identical semantics: pop one token per view, destroy the blob the
 //! instant the last token is consumed.
 
@@ -301,9 +302,8 @@ impl RedisStore {
         if res.first().map(String::as_str) != Some("ok") || res.len() < 3 {
             return Ok(ConsumeResult::Gone);
         }
-        let blob: BlobJson = serde_json::from_str(&res[1]).map_err(|_| {
-            redis::RedisError::from((redis::ErrorKind::TypeError, "bad blob json"))
-        })?;
+        let blob: BlobJson = serde_json::from_str(&res[1])
+            .map_err(|_| redis::RedisError::from((redis::ErrorKind::TypeError, "bad blob json")))?;
         let remaining: i64 = res[2].parse().unwrap_or(0);
         Ok(ConsumeResult::Ok {
             ciphertext: blob.ciphertext,
@@ -320,14 +320,24 @@ mod tests {
     #[tokio::test]
     async fn lifecycle_multi_view_then_destruction() {
         let s = MemoryStore::new();
-        s.create_secret("id1", "CT".into(), "IV".into(), vec!["t1".into(), "t2".into()], 3600)
-            .await;
+        s.create_secret(
+            "id1",
+            "CT".into(),
+            "IV".into(),
+            vec!["t1".into(), "t2".into()],
+            3600,
+        )
+        .await;
 
         let m = s.get_meta("id1").await.unwrap();
         assert_eq!(m.remaining, 2);
 
         match s.consume_view("id1").await {
-            ConsumeResult::Ok { remaining, ciphertext, .. } => {
+            ConsumeResult::Ok {
+                remaining,
+                ciphertext,
+                ..
+            } => {
                 assert_eq!(remaining, 1);
                 assert_eq!(ciphertext, "CT");
             }

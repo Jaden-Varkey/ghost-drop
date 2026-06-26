@@ -1,12 +1,60 @@
 # GhostDrop 👻
 
+[![CI](https://github.com/Jaden-Varkey/ghost-drop/actions/workflows/ci.yml/badge.svg)](https://github.com/Jaden-Varkey/ghost-drop/actions/workflows/ci.yml)
+[![Docker](https://github.com/Jaden-Varkey/ghost-drop/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Jaden-Varkey/ghost-drop/actions/workflows/docker-publish.yml)
+
 Frictionless, **zero-knowledge** multi-view secret sharing.
+
+**[Live demo](https://ghostdrop-demo.onrender.com)** · the demo uses an in-memory
+store, so secrets there don't survive a restart.
 
 Share a password or API key with a small group using a single link. The secret
 is encrypted **in the browser** (the server only ever sees ciphertext), can be
 opened a predefined number of times, and is **permanently destroyed** the moment
 the last view is consumed or the expiry is reached. A per-device "poison" marker
-stops one recipient from burning every view by refreshing.
+stops one recipient from burning every view by accidentally refreshing.
+
+## Stack
+
+- **Backend:** Rust ([axum](https://github.com/tokio-rs/axum) + Tokio), Redis
+  for the token list + TTL, HMAC-SHA256 for poison tokens.
+- **Frontend:** static HTML/CSS/JS with the WebCrypto API — no build step.
+
+## Quick start
+
+```bash
+# Run it. With no Redis running, GhostDrop falls back to an in-memory store
+# automatically — great for trying it out. Add --release for an optimized build.
+cargo run
+# open http://localhost:3000
+
+# For persistence / multiple instances, start a Redis and point GhostDrop at it:
+docker run -p 6379:6379 redis:7-alpine
+STORE_DRIVER=redis REDIS_URL=redis://127.0.0.1:6379 cargo run --release
+```
+
+Or run everything (app + Redis) with Docker Compose:
+
+```bash
+JWT_SECRET=$(openssl rand -hex 32) docker compose up --build   # bash
+```
+
+```powershell
+$env:JWT_SECRET = -join ((1..32) | ForEach-Object { '{0:x2}' -f (Get-Random -Max 256) }); docker compose up --build   # PowerShell
+```
+
+Or run the prebuilt image — no toolchain, no build:
+
+```bash
+docker run -p 3000:3000 ghcr.io/jaden-varkey/ghost-drop:latest
+# open http://localhost:3000
+```
+
+## Deploy
+
+One click, free tier, no database required (uses the in-memory store):
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Jaden-Varkey/ghost-drop)
 
 ## How it works
 
@@ -26,45 +74,6 @@ stops one recipient from burning every view by refreshing.
    The server also rejects any request that replays a valid poison token, so the
    authority is server-side, not just client friction.
 6. **Final destruction** — when the token list hits 0, the ciphertext is wiped.
-
-## Stack
-
-- **Backend:** Rust ([axum](https://github.com/tokio-rs/axum) + Tokio), Redis
-  for the token list + TTL, HMAC-SHA256 for poison tokens.
-- **Frontend:** static HTML/CSS/JS with the WebCrypto API — no build step.
-
-## Quick start
-
-```bash
-cargo run
-# open http://localhost:3000
-```
-
-With **no Redis running**, the default `STORE_DRIVER=auto` transparently falls
-back to an in-memory store — great for trying it out. For production or
-multi-instance deployments, use Redis (see below).
-
-For an optimized binary:
-
-```bash
-cargo run --release
-```
-
-### With Redis
-
-```bash
-# start a local Redis (Docker)
-docker run -p 6379:6379 redis:7-alpine
-
-# point GhostDrop at it and require it
-STORE_DRIVER=redis REDIS_URL=redis://127.0.0.1:6379 cargo run --release
-```
-
-### Docker Compose (app + Redis)
-
-```bash
-JWT_SECRET=$(openssl rand -hex 32) docker compose up --build
-```
 
 ## Configuration
 
@@ -113,4 +122,3 @@ sign/verify (including expiry rejection).
   design (one view *per device*), bounded by the hard server-side view limit.
 - Not included (add for production): rate limiting / abuse protection,
   persistent audit logging, and HTTPS termination (run behind a TLS proxy).
-```

@@ -37,10 +37,7 @@ pub struct CreateReq {
     ttl_seconds: i64,
 }
 
-pub async fn create_secret(
-    State(st): State<AppState>,
-    Json(req): Json<CreateReq>,
-) -> JsonResp {
+pub async fn create_secret(State(st): State<AppState>, Json(req): Json<CreateReq>) -> JsonResp {
     let cfg = &st.config;
 
     match decode_b64(&req.ciphertext) {
@@ -73,13 +70,7 @@ pub async fn create_secret(
 
     match st
         .store
-        .create_secret(
-            &id,
-            req.ciphertext,
-            req.iv,
-            tokens,
-            req.ttl_seconds as u64,
-        )
+        .create_secret(&id, req.ciphertext, req.iv, tokens, req.ttl_seconds as u64)
         .await
     {
         Ok(()) => (

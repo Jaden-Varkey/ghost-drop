@@ -50,8 +50,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // Static files (js/css/index) with index.html as SPA fallback.
-    let static_service =
-        ServeDir::new(&public_dir).fallback(ServeFile::new(index_path));
+    let static_service = ServeDir::new(&public_dir).fallback(ServeFile::new(index_path));
 
     let app = Router::new()
         .route("/healthz", get(handlers::healthz))
@@ -111,7 +110,10 @@ async fn build_store(config: &Config) -> Store {
 async fn security_headers(req: Request, next: Next) -> Response {
     let mut res = next.run(req).await;
     let h = res.headers_mut();
-    h.insert("X-Content-Type-Options", HeaderValue::from_static("nosniff"));
+    h.insert(
+        "X-Content-Type-Options",
+        HeaderValue::from_static("nosniff"),
+    );
     h.insert("Referrer-Policy", HeaderValue::from_static("no-referrer"));
     h.insert(
         "Content-Security-Policy",

@@ -91,10 +91,7 @@ pub fn is_poisoned_for(cfg: &Config, token: &str, sid: &str) -> bool {
         Ok(c) => c,
         Err(_) => return false,
     };
-    claims.iss == ISSUER
-        && claims.sub == SUBJECT
-        && claims.exp >= now_secs()
-        && claims.sid == sid
+    claims.iss == ISSUER && claims.sub == SUBJECT && claims.exp >= now_secs() && claims.sid == sid
 }
 
 #[cfg(test)]
