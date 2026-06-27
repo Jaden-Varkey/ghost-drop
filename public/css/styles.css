@@ -221,6 +221,19 @@ footer {
   padding: 0 12px;
 }
 
+footer .credit {
+  margin-top: 8px;
+}
+
+footer a {
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+footer a:hover {
+  color: var(--accent);
+}
+
 @media (max-width: 460px) {
   .row {
     flex-direction: column;

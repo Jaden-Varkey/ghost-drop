@@ -13,7 +13,11 @@ RUN touch src/main.rs && cargo build --release
 # --- runtime stage ---
 FROM debian:bookworm-slim
 WORKDIR /app
-RUN useradd -m app
+# ca-certificates lets the app verify TLS endpoints (e.g. a managed rediss:// Redis).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m app
 COPY --from=build /app/target/release/ghostdrop /usr/local/bin/ghostdrop
 COPY public ./public
 
