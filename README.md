@@ -5,9 +5,10 @@
 
 Frictionless, **zero-knowledge** multi-view secret sharing.
 
-**[Live demo]([https://ghostdrop-demo.onrender.com](https://ghost-drop-kj83.onrender.com))** · hosted on Render free tier 
-(may spin down after inactivity; first load can take ~30s). Uses an in-memory store,
-so secrets do not persist across restarts.
+**[Live demo](https://ghost-drop-kj83.onrender.com)** · hosted free on Render
+(may spin down when idle, so the first load can take ~30s). Backed by a
+persistent Redis store, so secrets last until their view limit or expiry,
+in spite of free-tier Render inactivity sleep or refresh calls.
 
 Share a password or API key with a small group using a single link. The secret
 is encrypted **in the browser** (the server only ever sees ciphertext), can be
@@ -53,7 +54,9 @@ docker run -p 3000:3000 ghcr.io/jaden-varkey/ghost-drop:latest
 
 ## Deploy
 
-One click, free tier, no database required (uses the in-memory store):
+One click on Render's free tier. Set `REDIS_URL` to a free
+[Upstash](https://upstash.com) database for persistence; leave it unset to run
+in-memory:
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Jaden-Varkey/ghost-drop)
 

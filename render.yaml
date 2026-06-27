@@ -1,14 +1,10 @@
-# Render Blueprint — free live deploy with a persistent store.
+# Render Blueprint — free one-click live deploy.
 # https://render.com/docs/blueprint-spec
 #
-# Points GhostDrop at an external Redis (e.g. a free Upstash database) so
-# secrets survive instance restarts and the free tier's idle spin-down.
-# Set REDIS_URL to your Upstash connection string (rediss://...) when Render
-# prompts for it — it is marked `sync: false`, so the secret is never written
-# to git.
-#
-# No external Redis? Set STORE_DRIVER to "memory" and delete the REDIS_URL
-# entry — data then lives in memory and is lost on every restart.
+# STORE_DRIVER=auto means: if you provide a REDIS_URL (e.g. a free Upstash
+# database, rediss://...), secrets persist across restarts and idle spin-down;
+# if you leave it blank, it falls back to an in-memory store. REDIS_URL is
+# marked `sync: false`, so Render prompts for it and never writes it to git.
 services:
   - type: web
     name: ghostdrop-demo
@@ -18,9 +14,9 @@ services:
     healthCheckPath: /healthz
     envVars:
       - key: STORE_DRIVER
-        value: redis
-      # Your managed Redis URL, e.g. rediss://default:<password>@<host>:<port>.
-      # Marked secret: Render asks for it at deploy and keeps it out of the repo.
+        value: auto
+      # Optional. A managed Redis URL, e.g. rediss://default:<password>@<host>:<port>.
+      # Set it for persistence; leave blank to run in-memory.
       - key: REDIS_URL
         sync: false
       # Render generates a strong value once and keeps it stable, so device
